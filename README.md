@@ -25,7 +25,7 @@ MoveSim is a **Tenderly-style transaction simulator** for the Movement blockchai
 
 1.  **Clone the repo:**
     ```bash
-    git clone https://github.com/your-username/movesim.git
+    git clone https://github.com/munyanezaarmel/MoveSim
     cd movesim
     ```
 
