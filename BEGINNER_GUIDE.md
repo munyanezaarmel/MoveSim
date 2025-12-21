@@ -1,59 +1,71 @@
-# 🔰 Beginner's Guide to MoveSim & Movement Blockchain
+# 🔰 Beginner's Guide: Understanding MoveSim & The "Why" Behind Testing
 
-Welcome! If you are new to blockchain or the Movement ecosystem, this guide will help you understand what this tool does and how to use it.
+This guide explains the "Magic" under the hood. If you are asking "What am I actually testing?" or "Why these specific contracts?", this is for you.
 
-## 🧐 What is this tool?
+## 🧠 Part 1: The "Why" - Understanding the Demo Contracts
 
-**MoveSim** is a "flight simulator" for blockchain transactions.
+We picked three specific examples because they represent **90% of all blockchain activity**.
 
-Before a pilot flies a real plane, they practice in a simulator. Similarly, before you send real money (crypto) on the blockchain, you should simulate it to:
-1.  **Check if it will fail** (and save money on gas fees).
-2.  **See exactly what will happen** (will my balance go down? by how much?).
-3.  **Understand the cost** (how much "Gas" will this burn?).
+### 1. MOVE Coin (The "Native" Token)
+*   **What is it?** This is the contract at address `0x1`. It is built into the blockchain itself.
+*   **Why test it?** Every time you send money to a friend, you are interacting with this specific code.
+*   **Under the Hood:** It doesn't actually "move" coins. It subtracts `100` from your row in the database and adds `100` to your friend's row.
+*   **What you are testing:** "Do I have enough balance?" and "Is the recipient address valid?"
 
-## 🧪 How to get Test Data?
+### 2. Token Standard (NFTs)
+*   **What is it?** Address `0x3`. This is the rulebook for digital items (art, game items).
+*   **Why test it?** Creating (minting) an NFT is complex. It uses a lot of "Gas" (storage space).
+*   **Under the Hood:** It creates a new unique ID (like `#43`) and assigns it to your address.
+*   **What you are testing:** "How much gas does it cost to create this image?" (Gas optimization).
 
-To use the "Live Mode" effectively, you might want to try simulating with your own address or real tokens.
-
-### 1. Get a Wallet
-You need a wallet that supports the Movement network.
-*   **Razor Wallet** or **Nightly Wallet** are popular choices.
-*   Install the extension and create a new account.
-*   Copy your address (it looks like `0x123...abc`).
-
-### 2. Get "Testnet" Tokens (Faucet)
-"Testnet" is a playground version of the blockchain. The money isn't real, so you can get it for free!
-1.  Go to the [Movement Faucet](https://faucet.movementlabs.xyz/).
-2.  Paste your wallet address.
-3.  Click "Get MOVE".
-4.  Now you have simulated money to test with!
-
-## 🎮 How to use the Simulator
-
-### Step 1: Pick a Mode
-*   **Demo Mode (Zap Icon):** Best for just looking around. It doesn't actually talk to the internet. It's instant and predictable. Use this to see how the UI works.
-*   **Live Mode (Radio Icon):** Real testing. It talks to the Movement Testnet. Use this when you want to see *actual* current network conditions.
-
-### Step 2: Choose a "Contract"
-A **Smart Contract** is just a program that lives on the blockchain.
-*   **MOVE Coin:** The standard money of the network. Use this to test sending money.
-*   **NFT Token:** Use this to test creating (minting) digital art.
-
-### Step 3: Fill in the Blanks
-*   **Sender:** This is "Who is doing the action?". You can paste YOUR address here!
-*   **Function:** "What do you want to do?" (e.g., `transfer` = send money).
-*   **Arguments:** The details.
-    *   `to`: Who are you sending to?
-    *   `amount`: How much? (Note: Computers count in small units. `100000000` usually equals `1 MOVE`).
-
-### Step 4: Analyze Results
-*   **Gas Used:** Think of this as fuel for the car. More complex actions (like trading) use more gas than simple ones (like sending money).
-*   **State Changes:** This is the receipt. It shows: "Address A balance went DOWN, Address B balance went UP".
-
-## ⚠️ Common Errors
-
-*   **INSUFFICIENT_BALANCE:** You tried to send more money than you have.
-*   **E_USER_NOT_FOUND:** You tried to send money to an address that doesn't exist on-chain yet (and didn't provide enough gas to create it).
+### 3. Demo DeFi Contract (The "Custom" App)
+*   **What is it?** A made-up Decentralized Exchange (DEX).
+*   **Why test it?** This represents "unsafe" code written by regular developers (not the blockchain creators).
+*   **Under the Hood:** It tries to swap Token A for Token B.
+*   **What you are testing:** "Does this code have bugs?" or "Will it steal my money?" (Security checks).
 
 ---
-*Happy Simulating!* 🚀
+
+## 🔍 Part 2: What does "Testing" actually mean?
+
+When you click "Simulate", you aren't just checking if the button works. You are running a **Virtual Machine (VM)**.
+
+### The "Under the Hood" Process
+
+1.  **The Snapshot (Forking):**
+    Imagine taking a photo of the entire blockchain *right now*. Who has what money? What contracts exist?
+    *MoveSim creates a temporary copy of this world.*
+
+2.  **The Dry Run:**
+    We run your transaction on this *copy*.
+    *   If you send 100 coins, we subtract it in the copy.
+    *   If the code crashes in the copy, we tell you "It failed".
+
+3.  **The Result:**
+    Since it was just a copy, **no real money changed hands**.
+    *   **Success:** "If you sign this now, it will work."
+    *   **Failure:** "If you sign this now, you will lose your gas fee and nothing will happen."
+
+---
+
+## 🛡️ Part 3: Security Scanning (New Feature)
+
+We added a **Security Scanner** to help you find bugs *before* you even try to simulate.
+
+### What is it looking for?
+
+1.  **Missing Access Control:**
+    *   *Bad Code:* Anyone can call `function withdraw_all_money()`.
+    *   *Good Code:* Only the `owner` can call `function withdraw_all_money()`.
+    *   *The Scanner:* Looks for sensitive functions that don't check `signer == owner`.
+
+2.  **Hardcoded Addresses:**
+    *   *Bad Code:* Sending money to `0x123...` (what if that address changes?).
+    *   *The Scanner:* Warns you to use variables instead of fixed addresses.
+
+3.  **Unchecked Arithmetic:**
+    *   *The Risk:* If you have `5` coins and subtract `10`, computer numbers might "wrap around" to `a huge number` instead of showing error.
+    *   *The Scanner:* Checks if you are being safe with math.
+
+### Why do I need this?
+In traditional programming, a bug means the app crashes. In blockchain, **a bug means you lose money forever.** The scanner is your spell-checker for safety.

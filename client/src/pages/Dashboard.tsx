@@ -8,7 +8,7 @@ import { simulateTransaction } from "@/lib/simulator";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { Info, ArrowLeft } from "lucide-react";
+import { Info, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
@@ -76,6 +76,12 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-4">
+            <Link href="/scanner">
+              <Button variant="outline" size="sm" className="hidden sm:flex border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50">
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                Security Scanner
+              </Button>
+            </Link>
             <Link href="/how-it-works">
               <Button variant="ghost" size="sm" className="hidden sm:flex text-muted-foreground hover:text-primary">
                 <Info className="w-4 h-4 mr-2" />
