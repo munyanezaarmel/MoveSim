@@ -1,0 +1,815 @@
+// When user clicks "Simulate Token Transfer"
+// Instead of calling blockchain, you return:
+{
+  success: true,
+  gasUsed: 2847,
+  message: "Transfer would succeed! ✅"
+  // This is FAKE data for demo purposes
+}
+```
+
+**Why?**
+- Judges can test instantly without setup
+- You can demo without internet/wallet
+- Shows UI/UX perfectly even if blockchain is down
+
+---
+
+# 🎯 COMPLETE REPLIT PROMPT (COPY THIS ENTIRE SECTION)
+```
+Build MoveSim - a complete Transaction Simulator for Movement blockchain using Next.js 14 App Router and TypeScript. This is a Tenderly-style tool for a hackathon. NO wallet connection required - users can simulate from ANY address.
+
+═══════════════════════════════════════════════════════════
+TECH STACK REQUIREMENTS
+═══════════════════════════════════════════════════════════
+
+Frontend:
+- Next.js 14 with App Router (TypeScript)
+- TailwindCSS for styling
+- shadcn/ui components
+- Recharts for gas visualization
+- Monaco Editor for code display
+
+Backend:
+- Next.js API Routes (TypeScript)
+- @aptos-labs/ts-sdk for Movement blockchain
+- Zod for validation
+
+Deployment:
+- Configured for Replit deployment
+- Environment variables properly set
+
+═══════════════════════════════════════════════════════════
+CORE CONCEPT: HOW TRANSACTION SIMULATION WORKS
+═══════════════════════════════════════════════════════════
+
+Users can simulate transactions WITHOUT owning private keys:
+
+1. User enters: sender address, contract, function, parameters
+2. System simulates: "What WOULD happen if this transaction ran?"
+3. Results show: success/failure, gas cost, state changes
+4. NO WALLET NEEDED - just like Tenderly does it
+
+═══════════════════════════════════════════════════════════
+DUAL MODE SYSTEM (CRITICAL)
+═══════════════════════════════════════════════════════════
+
+Implement TWO modes that users can toggle:
+
+┌─────────────────────────────────────────────────────────┐
+│ MODE 1: DEMO MODE (Default - for easy judging)         │
+└─────────────────────────────────────────────────────────┘
+
+Purpose: Instant testing without blockchain setup
+How it works:
+- User clicks "Demo Mode: ON"
+- All simulations return pre-written mock data
+- No API calls to blockchain
+- Instant results (< 100ms)
+
+Example flow:
+User inputs: Transfer 100 tokens
+↓
+Check if Demo Mode = ON
+↓
+Return mock response from DEMO_DATA object:
+{
+  success: true,
+  gasUsed: 2847,
+  changes: ["Sender: 1000 → 900", "Receiver: 500 → 600"]
+}
+
+┌─────────────────────────────────────────────────────────┐
+│ MODE 2: LIVE MODE (Real blockchain testing)            │
+└─────────────────────────────────────────────────────────┘
+
+Purpose: Real simulations on Movement testnet
+How it works:
+- User clicks "Demo Mode: OFF"
+- Makes actual calls to Movement testnet
+- Uses Aptos SDK simulate() function
+- Real results (2-5 seconds)
+
+Example flow:
+User inputs: Transfer 100 tokens
+↓
+Check if Demo Mode = OFF
+↓
+Call Movement testnet:
+const result = await aptos.transaction.simulate.simple({...})
+↓
+Parse real blockchain response
+↓
+Return actual simulation results
+
+═══════════════════════════════════════════════════════════
+PROJECT STRUCTURE
+═══════════════════════════════════════════════════════════
+
+movesim/
+├── app/
+│   ├── page.tsx                    # Main simulator interface
+│   ├── layout.tsx                  # Root layout
+│   ├── how-it-works/page.tsx      # Explanation page
+│   ├── api/
+│   │   ├── simulate/route.ts       # POST /api/simulate
+│   │   ├── contracts/route.ts      # GET /api/contracts
+│   │   └── analyze/route.ts        # POST /api/analyze
+│   └── globals.css
+├── components/
+│   ├── SimulatorForm.tsx           # Transaction input form
+│   ├── ResultsPanel.tsx            # Display simulation results
+│   ├── ContractBrowser.tsx         # Browse demo contracts
+│   ├── GasProfiler.tsx             # Gas breakdown chart
+│   ├── SecurityScanner.tsx         # Vulnerability checker
+│   ├── ModeToggle.tsx              # Demo/Live mode switch
+│   └── StateChangesTable.tsx       # Before/after comparison
+├── lib/
+│   ├── movement.ts                 # Movement blockchain client
+│   ├── simulator.ts                # Simulation logic
+│   ├── mock-data.ts                # Demo mode responses
+│   ├── security-rules.ts           # Security checks
+│   └── types.ts                    # TypeScript interfaces
+├── .env.local
+├── next.config.js
+└── package.json
+
+═══════════════════════════════════════════════════════════
+DETAILED IMPLEMENTATION
+═══════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────
+1. MOCK DATA SYSTEM (lib/mock-data.ts)
+────────────────────────────────────────────────────────────
+
+Create comprehensive mock data for demo mode:
+```typescript
+export const MOCK_SIMULATIONS = {
+  token_transfer: {
+    success: true,
+    gasUsed: 2847,
+    gasCostMOVE: "0.002847",
+    gasCostUSD: "$0.0085",
+    executionTime: 234,
+    stateChanges: [
+      {
+        address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+        resource: "0x1::coin::CoinStore<MOVE>",
+        field: "balance",
+        before: "1000000000",
+        after: "999900000",
+        change: "-100000",
+        changeFormatted: "-0.1 MOVE"
+      },
+      {
+        address: "0x8123a1f2b3c4d5e6f7890abcdef123456",
+        resource: "0x1::coin::CoinStore<MOVE>",
+        field: "balance",
+        before: "500000000",
+        after: "500100000",
+        change: "+100000",
+        changeFormatted: "+0.1 MOVE"
+      }
+    ],
+    events: [
+      {
+        type: "0x1::coin::WithdrawEvent",
+        guid: "0x742d...",
+        sequence: "42",
+        data: { amount: "100000" }
+      },
+      {
+        type: "0x1::coin::DepositEvent",
+        guid: "0x8123...",
+        sequence: "17",
+        data: { amount: "100000" }
+      }
+    ],
+    gasBreakdown: {
+      computation: 1200,
+      storage: 847,
+      network: 800
+    }
+  },
+  
+  nft_mint: {
+    success: true,
+    gasUsed: 5432,
+    gasCostMOVE: "0.005432",
+    gasCostUSD: "$0.0162",
+    executionTime: 412,
+    stateChanges: [
+      {
+        address: "0xNFT_COLLECTION_ADDRESS",
+        resource: "0x3::token::Collections",
+        field: "total_minted",
+        before: "42",
+        after: "43",
+        change: "+1"
+      },
+      {
+        address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+        resource: "0x3::token::TokenStore",
+        field: "tokens",
+        before: "[]",
+        after: "[TokenId(43)]",
+        change: "+1 NFT"
+      }
+    ],
+    events: [
+      {
+        type: "0x3::token::MintTokenEvent",
+        data: {
+          token_id: "43",
+          owner: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+          collection: "CoolApes"
+        }
+      }
+    ],
+    gasBreakdown: {
+      computation: 2100,
+      storage: 2532,
+      network: 800
+    }
+  },
+  
+  failed_insufficient_balance: {
+    success: false,
+    gasUsed: 1200,
+    gasCostMOVE: "0.001200",
+    gasCostUSD: "$0.0036",
+    executionTime: 145,
+    error: {
+      type: "INSUFFICIENT_BALANCE",
+      code: 65542,
+      message: "Sender account doesn't have sufficient balance to complete transfer",
+      location: "0x1::coin::withdraw",
+      line: 156,
+      suggestion: "Check sender balance before attempting transfer. Current balance: 0.05 MOVE, Required: 0.1 MOVE"
+    },
+    stateChanges: []
+  },
+  
+  failed_access_denied: {
+    success: false,
+    gasUsed: 980,
+    gasCostMOVE: "0.000980",
+    gasCostUSD: "$0.0029",
+    executionTime: 98,
+    error: {
+      type: "PERMISSION_DENIED",
+      code: 65537,
+      message: "Caller does not have permission to execute this function",
+      location: "0x123::admin::mint_tokens",
+      line: 42,
+      suggestion: "This function requires admin privileges. Only contract owner can call this."
+    },
+    securityWarning: "HIGH: Missing access control check detected"
+  }
+};
+
+export const DEMO_CONTRACTS = [
+  {
+    address: "0x1",
+    name: "MOVE Coin (Native Token)",
+    description: "Native Movement blockchain token",
+    functions: [
+      {
+        name: "transfer",
+        module: "coin",
+        fullName: "0x1::coin::transfer",
+        params: [
+          { name: "to", type: "address", example: "0x8123..." },
+          { name: "amount", type: "u64", example: "100000000" }
+        ],
+        description: "Transfer MOVE tokens to another address",
+        mockKey: "token_transfer"
+      }
+    ]
+  },
+  {
+    address: "0x3",
+    name: "Token Standard (NFTs)",
+    description: "Movement NFT token standard",
+    functions: [
+      {
+        name: "mint_token",
+        module: "token",
+        fullName: "0x3::token::mint_token",
+        params: [
+          { name: "collection_name", type: "string", example: "CoolApes" },
+          { name: "token_name", type: "string", example: "Ape #43" },
+          { name: "uri", type: "string", example: "ipfs://..." }
+        ],
+        description: "Mint a new NFT token",
+        mockKey: "nft_mint"
+      }
+    ]
+  },
+  {
+    address: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+    name: "Demo DeFi Contract",
+    description: "Example DeFi protocol for testing",
+    functions: [
+      {
+        name: "swap",
+        module: "dex",
+        fullName: "0x742d35::dex::swap",
+        params: [
+          { name: "token_in", type: "address", example: "0x1" },
+          { name: "token_out", type: "address", example: "0x2" },
+          { name: "amount_in", type: "u64", example: "1000000" }
+        ],
+        description: "Swap tokens on DEX",
+        mockKey: "token_transfer"
+      }
+    ]
+  }
+];
+```
+
+────────────────────────────────────────────────────────────
+2. API ROUTES
+────────────────────────────────────────────────────────────
+
+──── app/api/simulate/route.ts ────
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { Aptos, AptosConfig } from '@aptos-labs/ts-sdk';
+import { MOCK_SIMULATIONS } from '@/lib/mock-data';
+
+const config = new AptosConfig({
+  fullnode: "https://testnet.movementnetwork.xyz/v1",
+});
+const aptos = new Aptos(config);
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { sender, contract, functionName, args, demoMode } = body;
+
+    // DEMO MODE: Return mock data immediately
+    if (demoMode) {
+      // Determine which mock to return based on function
+      const mockKey = functionName.includes('transfer') 
+        ? 'token_transfer' 
+        : functionName.includes('mint')
+        ? 'nft_mint'
+        : 'token_transfer';
+      
+      // Simulate network delay for realism
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return NextResponse.json({
+        mode: 'demo',
+        ...MOCK_SIMULATIONS[mockKey]
+      });
+    }
+
+    // LIVE MODE: Real blockchain simulation
+    try {
+      const payload = {
+        function: `${contract}::${functionName}`,
+        type_arguments: [],
+        arguments: args
+      };
+
+      const [simulation] = await aptos.transaction.simulate.simple({
+        signerPublicKey: sender,
+        transaction: {
+          sender,
+          data: payload
+        }
+      });
+
+      // Parse real simulation results
+      const result = {
+        mode: 'live',
+        success: simulation.success,
+        gasUsed: parseInt(simulation.gas_used),
+        gasCostMOVE: (parseInt(simulation.gas_used) * 0.000001).toFixed(6),
+        gasCostUSD: (parseInt(simulation.gas_used) * 0.000001 * 3).toFixed(4),
+        executionTime: simulation.gas_used ? parseInt(simulation.gas_used) / 10 : 0,
+        stateChanges: parseStateChanges(simulation.changes || []),
+        events: simulation.events || [],
+        gasBreakdown: {
+          computation: Math.floor(parseInt(simulation.gas_used) * 0.4),
+          storage: Math.floor(parseInt(simulation.gas_used) * 0.35),
+          network: Math.floor(parseInt(simulation.gas_used) * 0.25)
+        },
+        error: !simulation.success ? {
+          type: 'EXECUTION_FAILURE',
+          message: simulation.vm_status,
+          code: 0
+        } : null
+      };
+
+      return NextResponse.json(result);
+
+    } catch (blockchainError: any) {
+      // If blockchain call fails, return error
+      return NextResponse.json({
+        mode: 'live',
+        success: false,
+        error: {
+          type: 'BLOCKCHAIN_ERROR',
+          message: blockchainError.message || 'Failed to connect to Movement testnet',
+          suggestion: 'Try switching to Demo Mode or check your inputs'
+        }
+      }, { status: 500 });
+    }
+
+  } catch (error: any) {
+    return NextResponse.json({
+      error: error.message || 'Internal server error'
+    }, { status: 500 });
+  }
+}
+
+function parseStateChanges(changes: any[]): any[] {
+  // Parse Movement blockchain state changes
+  return changes.map(change => ({
+    address: change.address,
+    resource: change.state_key_hash,
+    before: change.data?.before || 'N/A',
+    after: change.data?.after || 'N/A',
+    change: 'Modified'
+  }));
+}
+```
+
+──── app/api/contracts/route.ts ────
+```typescript
+import { NextResponse } from 'next/server';
+import { DEMO_CONTRACTS } from '@/lib/mock-data';
+
+export async function GET() {
+  return NextResponse.json({
+    contracts: DEMO_CONTRACTS
+  });
+}
+```
+
+──── app/api/analyze/route.ts ────
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  const { contract, code } = await request.json();
+  
+  // Basic security analysis
+  const issues = [];
+  
+  if (code.includes('public entry fun') && !code.includes('assert!')) {
+    issues.push({
+      severity: 'HIGH',
+      type: 'Missing Access Control',
+      line: 0,
+      message: 'Public function lacks permission checks',
+      suggestion: 'Add assert!(signer::address_of(account) == @admin, ERROR_NOT_ADMIN);'
+    });
+  }
+  
+  if (code.includes('+ ') && !code.includes('checked_add')) {
+    issues.push({
+      severity: 'MEDIUM',
+      type: 'Potential Integer Overflow',
+      line: 0,
+      message: 'Arithmetic operation may overflow',
+      suggestion: 'Use checked_add() or checked_mul() for safe arithmetic'
+    });
+  }
+  
+  return NextResponse.json({ issues });
+}
+```
+
+────────────────────────────────────────────────────────────
+3. MAIN UI COMPONENTS
+────────────────────────────────────────────────────────────
+
+──── components/ModeToggle.tsx ────
+```typescript
+'use client';
+
+import { useState } from 'react';
+
+export default function ModeToggle({ 
+  demoMode, 
+  onToggle 
+}: { 
+  demoMode: boolean; 
+  onToggle: (mode: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center gap-3 p-4 bg-gray-800 rounded-lg border border-gray-700">
+      <div className="flex-1">
+        <h3 className="text-sm font-semibold text-white mb-1">
+          {demoMode ? '🎭 Demo Mode' : '🔴 Live Mode'}
+        </h3>
+        <p className="text-xs text-gray-400">
+          {demoMode 
+            ? 'Using mock data - instant results for testing'
+            : 'Connected to Movement Testnet - real simulations'
+          }
+        </p>
+      </div>
+      
+      <button
+        onClick={() => onToggle(!demoMode)}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+          demoMode ? 'bg-yellow-500' : 'bg-green-500'
+        }`}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            demoMode ? 'translate-x-1' : 'translate-x-6'
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+```
+
+──── components/SimulatorForm.tsx ────
+```typescript
+'use client';
+
+import { useState } from 'react';
+import { DEMO_CONTRACTS } from '@/lib/mock-data';
+
+interface SimulatorFormProps {
+  demoMode: boolean;
+  onSimulate: (data: any) => void;
+  loading: boolean;
+}
+
+export default function SimulatorForm({ demoMode, onSimulate, loading }: SimulatorFormProps) {
+  const [sender, setSender] = useState('0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1');
+  const [contract, setContract] = useState('0x1');
+  const [functionName, setFunctionName] = useState('coin::transfer');
+  const [args, setArgs] = useState('["0x8123a1f2b3c4d5e6f7890abcdef123456", 100000000]');
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const parsedArgs = JSON.parse(args);
+      onSimulate({
+        sender,
+        contract,
+        functionName,
+        args: parsedArgs,
+        demoMode
+      });
+    } catch (error) {
+      alert('Invalid JSON in arguments field');
+    }
+  };
+
+  const loadExample = (exampleType: string) => {
+    if (exampleType === 'transfer') {
+      setSender('0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1');
+      setContract('0x1');
+      setFunctionName('coin::transfer');
+      setArgs('["0x8123a1f2b3c4d5e6f7890abcdef123456", 100000000]');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Sender Address
+        </label>
+        <input
+          type="text"
+          value={sender}
+          onChange={(e) => setSender(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+          placeholder="0x..."
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Any address - no wallet needed!
+        </p>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Contract Address
+        </label>
+        <input
+          type="text"
+          value={contract}
+          onChange={(e) => setContract(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Function
+        </label>
+        <input
+          type="text"
+          value={functionName}
+          onChange={(e) => setFunctionName(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white"
+          placeholder="module::function"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Arguments (JSON Array)
+        </label>
+        <textarea
+          value={args}
+          onChange={(e) => setArgs(e.target.value)}
+          className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white font-mono text-sm"
+          rows={3}
+          placeholder='["address", 1000000]'
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-black font-semibold py-3 rounded disabled:opacity-50"
+        >
+          {loading ? '⏳ Simulating...' : '🚀 Simulate Transaction'}
+        </button>
+        
+        <button
+          type="button"
+          onClick={() => loadExample('transfer')}
+          className="px-4 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded"
+        >
+          Load Example
+        </button>
+      </div>
+    </form>
+  );
+}
+```
+
+──── components/ResultsPanel.tsx ────
+```typescript
+'use client';
+
+export default function ResultsPanel({ result }: { result: any }) {
+  if (!result) return null;
+
+  return (
+    <div className="space-y-4">
+      {/* Status Banner */}
+      <div className={`p-4 rounded-lg border-2 ${
+        result.success 
+          ? 'bg-green-900/20 border-green-500' 
+          : 'bg-red-900/20 border-red-500'
+      }`}>
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">{result.success ? '✅' : '❌'}</span>
+          <div>
+            <h3 className="text-xl font-bold text-white">
+              {result.success ? 'Transaction Will Succeed' : 'Transaction Will Fail'}
+            </h3>
+            <p className="text-sm text-gray-400">
+              Mode: {result.mode === 'demo' ? '🎭 Demo Data' : '🔴 Live Testnet'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Gas Information */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <p className="text-xs text-gray-400 mb-1">Gas Used</p>
+          <p className="text-2xl font-bold text-white">{result.gasUsed?.toLocaleString()}</p>
+          <p className="text-xs text-gray-500">units</p>
+        </div>
+        
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <p className="text-xs text-gray-400 mb-1">Cost in MOVE</p>
+          <p className="text-2xl font-bold text-yellow-500">{result.gasCostMOVE}</p>
+          <p className="text-xs text-gray-500">MOVE</p>
+        </div>
+        
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <p className="text-xs text-gray-400 mb-1">Cost in USD</p>
+          <p className="text-2xl font-bold text-green-500">{result.gasCostUSD}</p>
+          <p className="text-xs text-gray-500">dollars</p>
+        </div>
+      </div>
+
+      {/* State Changes */}
+      {result.stateChanges && result.stateChanges.length > 0 && (
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <h4 className="text-lg font-semibold text-white mb-3">📊 State Changes</h4>
+          <div className="space-y-2">
+            {result.stateChanges.map((change: any, i: number) => (
+              <div key={i} className="bg-gray-900 p-3 rounded">
+                <p className="text-xs text-gray-400 mb-1">
+                  {change.address.slice(0, 10)}...{change.address.slice(-8)}
+                </p>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-300">{change.field}:</span>
+                  <span className="text-red-400">{change.before}</span>
+                  <span className="text-gray-500">→</span>
+                  <span className="text-green-400">{change.after}</span>
+                  <span className={`ml-auto font-mono ${
+                    change.change.startsWith('+') ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {change.changeFormatted || change.change}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Error Display */}
+      {result.error && (
+        <div className="bg-red-900/20 border-2 border-red-500 p-4 rounded">
+          <h4 className="text-lg font-semibold text-red-400 mb-2">
+            ⚠️ {result.error.type}
+          </h4>
+          <p className="text-white mb-2">{result.error.message}</p>
+          {result.error.suggestion && (
+            <div className="bg-red-950 p-3 rounded mt-2">
+              <p className="text-sm text-red-300">
+                💡 <strong>Suggestion:</strong> {result.error.suggestion}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Events */}
+      {result.events && result.events.length > 0 && (
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <h4 className="text-lg font-semibold text-white mb-3">📡 Events Emitted</h4>
+          <div className="space-y-2">
+            {result.events.map((event: any, i: number) => (
+              <div key={i} className="bg-gray-900 p-3 rounded">
+                <p className="text-sm font-mono text-yellow-400">{event.type}</p>
+                <pre className="text-xs text-gray-400 mt-1">
+                  {JSON.stringify(event.data, null, 2)}
+                </pre>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+────────────────────────────────────────────────────────────
+4. MAIN PAGE
+────────────────────────────────────────────────────────────
+
+──── app/page.tsx ────
+```typescript
+'use client';
+
+import { useState } from 'react';
+import ModeToggle from '@/components/ModeToggle';
+import SimulatorForm from '@/components/SimulatorForm';
+import ResultsPanel from '@/components/ResultsPanel';
+
+export default function Home() {
+  const [demoMode, setDemoMode] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const handleSimulate = async (data: any) => {
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await fetch('/api/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const json = await response.json();
+      setResult(json);
+    } catch (error) {
+      console.error(error);
+      alert('Simulation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-900">
+      {/* Header */}
+      <header className="border-b border-gray-800 bg-gray-950">
+        <div className="max-w-7xl mx-auto px-
