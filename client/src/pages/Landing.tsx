@@ -53,7 +53,7 @@ export default function Landing() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-5xl md:text-7xl font-heading font-bold tracking-tight mb-6"
           >
-            The <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Tenderly</span> for<br />
+            The <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent" style={{ WebkitBackgroundClip: 'text', backgroundClip: 'text' }}>Tenderly</span> for<br />
             Movement Blockchain
           </motion.h1>
           
