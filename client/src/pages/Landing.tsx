@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Shield, Database, Terminal, Code2, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
+import { LandingPreview } from "@/components/LandingPreview";
 
 export default function Landing() {
   return (
@@ -147,12 +148,9 @@ export default function Landing() {
               <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
               <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
             </div>
-            <div className="p-1 pt-12 opacity-80 pointer-events-none grayscale-[0.2] hover:grayscale-0 transition-all duration-700">
-             <div className="grid grid-cols-12 gap-4 p-4">
-               <div className="col-span-3 bg-white/5 h-96 rounded-lg animate-pulse"></div>
-               <div className="col-span-4 bg-white/5 h-96 rounded-lg animate-pulse delay-75"></div>
-               <div className="col-span-5 bg-white/5 h-96 rounded-lg animate-pulse delay-150"></div>
-             </div>
+            
+            <div className="pt-10">
+              <LandingPreview />
             </div>
             
             <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm opacity-0 hover:opacity-100 transition-opacity duration-300">
