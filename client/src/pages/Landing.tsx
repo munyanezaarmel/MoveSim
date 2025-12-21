@@ -29,7 +29,7 @@ export default function Landing() {
           </Link>
           <Link href="/dashboard">
             <Button variant="outline" className="hidden sm:flex border-primary/20 hover:border-primary/50 text-primary hover:text-primary hover:bg-primary/5">
-              Launch App
+              Go to Dashboard
             </Button>
           </Link>
         </div>
